@@ -13,7 +13,7 @@ def primes_dict_from_file(maximal):
                 if(int(s) > maximal):
                     return primes
                 primes[int(s)] = Cache()
-
+         
         return primes
 
 # print(len(primes_dict_from_file(10000000000)))
