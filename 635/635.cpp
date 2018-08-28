@@ -13,6 +13,7 @@
 #include <cstdarg>
 #include "printing.h"
 
+
 using namespace std;
 
 void readPrimes(vector<uint64_t> &primes, uint64_t L)
@@ -27,7 +28,6 @@ void readPrimes(vector<uint64_t> &primes, uint64_t L)
     uint64_t p;
     while (input >> p)
     {
-
         if (p > L)
             break;
         primes.push_back(p);
@@ -77,6 +77,7 @@ void getInverses(unordered_map<uint64_t, Cache> &map, vector<uint64_t> &facts, v
 {
     cout << "Inverses: " << endl;
     int counter = 0;
+    // #pragma omp for
     for (auto p : primes)
     {
         auto c = Cache();
@@ -101,7 +102,7 @@ uint64_t counter = 0;
 uint64_t A_pre_computed(vector<uint64_t> &facts, vector<uint64_t> &primes, unordered_map<uint64_t, Cache> &map, uint64_t q, uint64_t n, uint64_t mod)
 {
     counter += 1;
-    if (counter % 10000 == 0)
+    if (counter % 100000 == 0)
         cout << "\rArgument number\t" << counter << "/" << primes.size() << endl;
     // 1 / n((qn choose n) +(n - 1) q(mod p)
     //(nq) !+(n - 1) qn !((q - 1) n) !
@@ -129,27 +130,35 @@ uint64_t A_pre_computed(vector<uint64_t> &facts, vector<uint64_t> &primes, unord
 uint64_t S_pre_computed(vector<uint64_t> &facts, vector<uint64_t> &primes, unordered_map<uint64_t, Cache> &map, uint64_t L, uint64_t q, uint64_t mod)
 {
     uint64_t sum = 0;
+#pragma omp parallel
+{
+
+    #pragma omp for reduce(+ : sum)
     for (auto n : primes)
     {
         if (n > L)
             break;
         sum = (sum + A_pre_computed(facts, primes, map, q, n, mod)) % mod;
     }
-    return sum - q;
+    return sum%mod - q;
+}
 }
 
 int main(int argc, char *args[])
 {
-    uint64_t L = 8e8;
+    uint64_t L = 1e8;
     uint64_t mod = 1000000009; // prime
 
     vector<uint64_t> primes;
-    primes.reserve(round(L / log(L)));
+    primes.reserve(round(L * 1.0/ log(L))+300);
+    cout<<"Allocated 1 " << primes.capacity() << endl;
     readPrimes(primes, L);
 
-    vector<uint64_t> facts(1);
+    vector<uint64_t> facts;
+    facts.push_back(1);
     facts.reserve(3 * L);
-    cout<<"Allocated";
+
+    cout<<"Allocated 2"<< endl;
     getFactorials(facts, mod);
 
     unordered_map<uint64_t, Cache> map;
